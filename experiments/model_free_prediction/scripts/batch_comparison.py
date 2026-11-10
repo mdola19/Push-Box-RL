@@ -1,4 +1,4 @@
-from tabular.prediction import batch_mc, batch_td_0, certainty_equivalence
+from tabular.prediction import monte_carlo, batch_td_0, certainty_equivalence
 from tabular.rollout import run_episode
 from tabular.policies import sample_action
 from common.stats import bootstrap_ci
@@ -23,7 +23,9 @@ for seed in seeds:
         visited[ep.states] = True
     m = mask & (V_soft > -99) & visited
 
-    V_mc = batch_mc(episodes, mdp.n_states, gamma)
+    mdp.reset(seed=seed)
+    rng = np.random.default_rng(seed + 1)
+    V_mc, _ = monte_carlo(mdp, act, n_batch, alpha=None, gamma=gamma, running_average=True)
     V_td = batch_td_0(episodes, mdp.n_states, gamma)
     V_ce = certainty_equivalence(episodes, mdp.n_states, mdp.n_actions, gamma)
 
@@ -32,7 +34,7 @@ for seed in seeds:
     ce_errors.append(np.sqrt(np.mean((V_ce[m] - V_soft[m]) ** 2)))
     print(f"seed {seed}: batch TD vs CE max difference = {np.max(np.abs(V_td - V_ce)):.1e}")
 
-names = ["Batch MC", "Batch TD", "Certainty equivalence"]
+names = ["MC (1/N)", "Batch TD", "Certainty equivalence"]
 means = []
 lows = []
 highs = []

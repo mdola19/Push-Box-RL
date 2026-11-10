@@ -129,17 +129,6 @@ def backward_td_lambda(env, act, n_episodes, alpha, gamma, Lambda, callback=None
             callback(i, V)
     return V, n_truncated
 
-def batch_mc(episodes, n_states, gamma):
-    V = np.zeros(n_states)
-    N = np.zeros(n_states)
-    for ep in episodes:
-        G = discounted_returns(ep.rewards, gamma)
-        for t, s in enumerate(ep.states):
-            V[s] += G[t]
-            N[s] += 1
-    V = np.divide(V, N, out=np.zeros(n_states), where=N > 0)
-    return V
-
 def batch_td_0(episodes, n_states, gamma, alpha=0.01, tol=1e-10):
     V = np.zeros(n_states)
     while True:
