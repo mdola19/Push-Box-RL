@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from envs.grid import DELTAS
+from common.stats import bootstrap_ci
 
 def plot_value_heatmap(mdp, V, box_pos, policy=None, ax=None):
     """
@@ -31,4 +32,27 @@ def plot_value_heatmap(mdp, V, box_pos, policy=None, ax=None):
     ax.set_xlabel('Agent Column')
     ax.set_ylabel('Agent Row')
 
+    return ax
+
+def plot_curves(runs_by_method, ax=None, x_key="step", y_key="rms_error", n_points=200):
+    if ax is None:
+        _, ax = plt.subplots()
+
+    for method, runs in runs_by_method.items():
+        xs = [np.array([m[x_key] for m in run["metrics"]], dtype=float) for run in runs]
+        ys = [np.array([m[y_key] for m in run["metrics"]], dtype=float) for run in runs]
+
+        x_max = min(x[-1] for x in xs)
+        grid = np.linspace(0, x_max, n_points)
+        curves = np.array([np.interp(grid, x, y) for x, y in zip(xs, ys)])
+
+        mean = curves.mean(axis=0)
+        low, high = bootstrap_ci(curves)
+
+        line, = ax.plot(grid, mean, label=f"{method} (n={len(runs)})")
+        ax.fill_between(grid, low, high, color=line.get_color(), alpha=0.2)
+
+    ax.set_xlabel(x_key)
+    ax.set_ylabel(y_key)
+    ax.legend()
     return ax
