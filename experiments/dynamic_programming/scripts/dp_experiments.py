@@ -9,7 +9,6 @@ policy = np.full((mdp.n_states, mdp.n_actions), 1/mdp.n_actions) # start with eq
 gamma = 0.99 # Problem has dead ends so we should use a value < 1 to ensure convergence
 theta = 1e-6
 
-
 # Environment Behaviour vs Model
 rng = np.random.default_rng(0)
 non_terminal = np.where(~mdp.walls)[0] # ~ = inverts a boolean array
@@ -32,7 +31,7 @@ plot_value_heatmap(mdp, V, (4,1), policy=policy, ax=ax[0])
 plot_value_heatmap(mdp, V, (2,2), policy=policy, ax=ax[1])
 plot_value_heatmap(mdp, V, (3, 4), policy=policy, ax=ax[2])
 fig.tight_layout()
-fig.savefig("experiments/results/part1/policy_eval.png")
+fig.savefig("experiments/dynamic_programming/results/policy_eval.png")
 
 # Convergence
 V_optimal, value_policy, value_history = value_iteration(mdp.P, mdp.R, gamma, theta, False)
@@ -48,12 +47,12 @@ ax[1].legend()
 ax[1].set_xlabel("Sweep")
 ax[1].set_title(f'Policy Iteration Convergence')
 ax[1].set_ylabel('log(Value Error)')
-fig.savefig("experiments/results/part1/convergence_plots.png")
+fig.savefig("experiments/dynamic_programming/results/convergence_plots.png")
 
 # Optimal Policy
 fig, ax = plt.subplots(1,1)
 plot_value_heatmap(mdp, V_optimal, mdp.box_pos, policy=value_policy, ax=ax)
-fig.savefig("experiments/results/part1/optimal_policy_heatmap.png")
+fig.savefig("experiments/dynamic_programming/results/optimal_policy_heatmap.png")
 
 # Sync vs In-Place
 _, _, value_history2 = value_iteration(mdp.P, mdp.R, gamma, theta, True)
@@ -87,4 +86,4 @@ for ax, s in zip(axs.flat, unrecoverable_states.flatten()):
     ax.imshow(img)
 fig.suptitle(f"{n} Unrecoverable States - R = Agent, Y = Box, G = Goal")
 fig.tight_layout()
-fig.savefig("experiments/results/part1/unrecoverable_states.png")
+fig.savefig("experiments/dynamic_programming/results/unrecoverable_states.png")

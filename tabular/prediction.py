@@ -119,6 +119,7 @@ def backward_td_lambda(env, act, n_episodes, alpha, gamma, Lambda, callback=None
             next_state, reward, terminated, truncated, _ = env.step(a)
             next_s = env.state_index[next_state]
             E *= gamma * Lambda
+            E[s] += 1
             delta = reward + gamma * V[next_s] - V[s]
             V += alpha * delta * E 
             state = next_state
