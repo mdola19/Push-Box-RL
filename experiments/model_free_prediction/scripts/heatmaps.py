@@ -4,7 +4,7 @@ from experiments.model_free_prediction.scripts.rollouts_test import mdp, gamma, 
 import numpy as np
 import matplotlib.pyplot as plt
 
-n_episodes = 500
+n_episodes = 1000
 seeds = [0, 1, 2, 3, 4]
 alphas = [0.01, 0.05, 0.1, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95]
 m = mask & (V_soft > -99)

@@ -22,15 +22,15 @@ for seed in seeds:
     act = lambda s: sample_action(soft_pi, s, rng)
 
     errors = []
-    monte_carlo(mdp, act, n_episodes, alpha=0.05, gamma=gamma, callback=record)
+    monte_carlo(mdp, act, n_episodes, alpha=0.35, gamma=gamma, callback=record)
     mc_errors.append(errors)
 
     errors = []
-    td_0(mdp, act, n_episodes, alpha=0.1, gamma=gamma, callback=record)
+    td_0(mdp, act, n_episodes, alpha=0.5, gamma=gamma, callback=record)
     td_errors.append(errors)
 
     errors = []
-    backward_td_lambda(mdp, act, n_episodes, alpha=0.1, gamma=gamma, Lambda=0.8, callback=record)
+    backward_td_lambda(mdp, act, n_episodes, alpha=0.35, gamma=gamma, Lambda=0.8, callback=record)
     lambda_errors.append(errors)
 
 episodes_axis = range(10, n_episodes + 1, 10)
@@ -74,7 +74,7 @@ for name, errs in [("MC", mc_final), ("TD(0)", td_final)]:
     low, high = bootstrap_ci(errs)
     ax.plot(alphas, errs.mean(axis=0), marker="o", label=name)
     ax.fill_between(alphas, low, high, alpha=0.2)
-ax.set_title("V(s) RMS Error after 500 Episodes vs Step Size (mean and 95% CI over 5 seeds)")
+ax.set_title(f"V(s) RMS Error after {n_episodes} Episodes vs Step Size (mean and 95% CI over 5 seeds)")
 ax.set_xlabel("Step size α")
 ax.set_ylabel("RMS Error")
 ax.legend()
