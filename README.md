@@ -1,4 +1,4 @@
-<img width="1400" height="500" alt="image" src="https://github.com/user-attachments/assets/36c6bcf1-1627-4ceb-80b6-00845d15b918" /># Push-Box-RL
+# Push-Box-RL
 To supplement the Reinforcement Learning theory I have been studying, I built this open-ended project where the general goal is to create a policy for an agent to **push a box to some goal position**. To apply all of the concepts that I am learning, this project was done in layers of evolution, with each layer adding complexity or redefining the problem: starting with a 2D grid world and building up to a sim world with a robot arm and box. The code builds on top of itself but you can see each isolated "layer" by tracking the commits.
 
 ## Grid World
@@ -215,7 +215,7 @@ In addition to these algorithms, I added an additional layout, "cliff", which ha
   - **Lambda Study -** to get an idea for how to tune Lambda in future implementation, I did a study on varying lambda in SARSA and see how many episodes it takes to reach within 95% of V*. On the open 5x5 layout, I ran SARSA with each lambda for 5000 episodes with 5 different seeds and recorded how many episodes were needed to reach 95% of V*. I also computed a 95% confidence interval using the 5 seeds to make sure there's no overlaps between different lambdas (one lambda could be better than the other with some seeds); there wasn't any. The graph below shows that a higher lambda is better which theoretically makes sense as the only signal for a good route is reaching the goal (ends -1 rewards) and a higher lambda relays that signal further back throughout the trajectory compared to a lower lambda.
 
 <div align="center">   
-<img width="700" height="500" alt="image" src="https://github.com/user-attachments/assets/5e970676-d0d3-4e7d-ba9b-390205e78d35" />
+<img width="350" height="250" alt="image" src="https://github.com/user-attachments/assets/5e970676-d0d3-4e7d-ba9b-390205e78d35" />
 </div>
 
 With this, we have essentially implemented the main ideas of RL in a small, grid world. We can find the optimal policy without having all the transition probabilities by learning through experience, through both offline/online learning as well as on/off policy learning. 
