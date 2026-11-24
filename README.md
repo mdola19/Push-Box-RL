@@ -1,4 +1,4 @@
-# Push-Box-RL
+<img width="1400" height="500" alt="image" src="https://github.com/user-attachments/assets/36c6bcf1-1627-4ceb-80b6-00845d15b918" /># Push-Box-RL
 To supplement the Reinforcement Learning theory I have been studying, I built this open-ended project where the general goal is to create a policy for an agent to **push a box to some goal position**. To apply all of the concepts that I am learning, this project was done in layers of evolution, with each layer adding complexity or redefining the problem: starting with a 2D grid world and building up to a sim world with a robot arm and box. The code builds on top of itself but you can see each isolated "layer" by tracking the commits.
 
 ## Grid World
@@ -178,8 +178,45 @@ With all these algorithms in place, I wanted to actually test them out and see h
 </div>
 
 ### Model-Free Control
+Now using these policy evaluation methods, we can extend the algorithms towards finding the optimal policy. The first extension that needs to be made is switching to finding the **action-value function (Q)** instead to avoid the one step lookahead in policy selection which needs transition probabilities. The second major extension is using **ε-greedy** policy selection which enables **exploration** (choose a random action with probability ε otherwise use the action resulting in max Q). To ensure the algorithms converge on a deterministic optimal policy, we decay ε. Algorithms implemented:
 
+  - **MC Control -** simply offline policy iteration from DP but uses MC for policy evaluation and ε-greedy policy selection.
+ 
+  - **SARSA -** uses TD learning for policy evaluation in online policy iteration. It's called SARSA because it uses the tuple (S, A, R, S', A') to find Q instead of just (S, R, S') to find V. I implemented 1-step, n-step, and lambda TD for comparison. Lambda TD also required extending eligibility traces to state-action pairs rather than just states.
 
+  - **Q-Learning -** an off-policy method where we step through the environment with an ε-greedy policy while updating Q towards a TD target constructed using the greedy policy.
 
+In addition to these algorithms, I added an additional layout, "cliff", which has a pit thats acts like a wall in terms of pushing the box but if the agent falls into the pit, it gets a -100 reward. The point of this layout is to compare the differences of exploration between off-policy and on-policy learning. To test this out, alongside some other concepts, I ran the following experiments:
 
+  - **Learning Curves -** one of the main comparisons you can do between the algorithms is how fast they converge on the optimal policy. In two different layouts (open 5x5 grid, 7x7 grid with wall), I ran each algorithm for 6000 episodes using 5 different seeds (to account for how variance can influence these algorithms) and plotted the average return across the 5 seeds every 20 episodes (averaged across the 20 episodes). This plot showed that MC control is obviously the fastest, which makes sense because it is offline (has full episodes available). However, it shows that SARSA lambda and 4-step SARSA were not too much slower despite being online methods that use bootstrapping which is quite useful. There is some drop-off in 1-step SARSA though, including Q-learning which was the slowest (as expected). An additional plot showing the value function of the derived greedy policy instead of plain return shows that these methods do indeed converge on the optimal policy (horizontal line is the value of the optimal policy from DP). For the 7x7 layout, more episodes and some tuning of parameters should give a better convergence.
+
+    - Another thing to note is that in the 7x7 grid with the wall, MC actually failed to reach the optimal policy. This was an unintentional result but it shows the problem with using a true average, especially when exploring, because it fails to forget early returns from bad policies (switching to a constant step size in the update should fix this).
+
+<div align="center">   
+<img width="700" height="250" alt="image" src="https://github.com/user-attachments/assets/578f81ad-b80f-4ea7-906e-eb7a727ea383" />
+<img width="700" height="250" alt="image" src="https://github.com/user-attachments/assets/56ec8d31-423d-4bac-9866-f8d5114c9641" />
+</div>
+
+  - **Route Plots -** after making the learning curves, I used the final Q (last seed) for each method to derive a greedy policy, stepped through the environment (with 0 slip), and plotted the states on the grid to show what our algorithms learned about optimizing the problem. They all essentially the same optimal trajectories with small differences that result in the same general movements. Only MC in the 7x7 grid is empty because it got stuck as mentioned earlier.
+
+<div align="center">   
+<img width="1100" height="400" alt="image" src="https://github.com/user-attachments/assets/9e45c209-9366-4579-9409-06ea8037ae94" />
+</div>
+
+  - **Cliff Layout -** as expected, both on-policy and off-policy methods converged on the optimal policy after about 20000 episodes (when epsilon becomes 0). The interesting thing was that they both converged after about the same number of episodes but behaved differently for the bulk of training. The returns from Q-learning were quite low at the beginning. That makes sense because Q-learning learns the value of the greedy policy and ignores the cost of its own exploration, so it walked near the pit and fell in more often. SARSA learns the value of the exploratory policy it actually follows, so it learned to avoid the pit while exploring. However, once Q-learning got close to the optimal value function, it tended to stick to it, whereas SARSA showed some oscillations because its updates use the exploratory next action, which makes its TD targets noisier.
+    
+    - **Note:** both routes are the same length, so both are optimal, but Q-learning's route goes closer to the pits. This fits with how Q-learning works, since it learns the value of the greedy policy where there is no risk of falling in, so it has no reason to prefer staying away from the pit. SARSA's values were shaped by its own exploration, so it settled on the route that keeps more distance. This is only one seed, so it's an observation rather than a guaranteed result (some random episodes could have resulted in it also avoiding the pits, even though it isn't a mechanism of the algorithm).
+
+<div align="center">   
+<img width="700" height="250" alt="image" src="https://github.com/user-attachments/assets/affa1c4f-2020-47e7-975e-6d601032c9e7" />
+<img width="700" height="200" alt="image" src="https://github.com/user-attachments/assets/ff2297de-4cbc-42b0-9866-9ba9726fc948" />
+</div>
+
+  - **Lambda Study -** to get an idea for how to tune Lambda in future implementation, I did a study on varying lambda in SARSA and see how many episodes it takes to reach within 95% of V*. On the open 5x5 layout, I ran SARSA with each lambda for 5000 episodes with 5 different seeds and recorded how many episodes were needed to reach 95% of V*. I also computed a 95% confidence interval using the 5 seeds to make sure there's no overlaps between different lambdas (one lambda could be better than the other with some seeds); there wasn't any. The graph below shows that a higher lambda is better which theoretically makes sense as the only signal for a good route is reaching the goal (ends -1 rewards) and a higher lambda relays that signal further back throughout the trajectory compared to a lower lambda.
+
+<div align="center">   
+<img width="700" height="500" alt="image" src="https://github.com/user-attachments/assets/5e970676-d0d3-4e7d-ba9b-390205e78d35" />
+</div>
+
+With this, we have essentially implemented the main ideas of RL in a small, grid world. We can find the optimal policy without having all the transition probabilities by learning through experience, through both offline/online learning as well as on/off policy learning. 
    
