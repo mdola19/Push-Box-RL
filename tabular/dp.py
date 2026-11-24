@@ -93,3 +93,9 @@ def value_iteration(P, R, gamma, theta, in_place=False):
 
     return V, new_policy, history
 
+def evaluate_greedy(P, R, Q, gamma):
+    greedy_pi = np.zeros((P.shape[0], P.shape[1]))
+    greedy_pi = greedy_policy(Q, greedy_pi)
+    P_pi, R_pi = flatten_mdp(P, R, greedy_pi)
+    return np.linalg.solve(np.eye(len(R_pi)) - gamma * P_pi, R_pi) # Equation in Matrix Form: V = R_pi + gamma * P_pi*V
+    

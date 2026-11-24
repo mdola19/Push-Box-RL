@@ -22,10 +22,17 @@ LAYOUTS["rooms7"][0, 0] = 'A'
 LAYOUTS["rooms7"][2, 1] = 'B'
 LAYOUTS["rooms7"][5, 6] = 'G'
 
+LAYOUTS["cliff"] = np.full((4,10), '.')
+LAYOUTS['cliff'][-2, 0] = 'A'
+LAYOUTS['cliff'][-2, 1] = 'B'
+LAYOUTS['cliff'][-1, 2:-3] = 'X'
+LAYOUTS['cliff'][-2, -2] = 'G'
+
 def parse_layout(layout):
     agent_pos = tuple(np.argwhere(layout == 'A')[0].tolist())
     box_pos = tuple(np.argwhere(layout == 'B')[0].tolist())
     goal_pos = tuple(np.argwhere(layout == 'G')[0].tolist())
     walls = layout == '#'
-    return walls, agent_pos, box_pos, goal_pos
+    pits = layout == 'X'
+    return walls, agent_pos, box_pos, goal_pos, pits
 

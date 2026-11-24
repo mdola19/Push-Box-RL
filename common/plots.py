@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import numpy as np
 
 from envs.grid import DELTAS
@@ -54,5 +55,27 @@ def plot_curves(runs_by_method, ax=None, x_key="step", y_key="rms_error", n_poin
 
     ax.set_xlabel(x_key)
     ax.set_ylabel(y_key)
+    ax.legend()
+    return ax
+
+def plot_route(env, states, ax):
+    if ax is None:
+        _, ax = plt.subplots()
+
+    grid = np.zeros(env.walls.shape)
+    grid[env.walls] = 1
+    grid[env.pits] = 2
+    grid[env.goal_pos] = 3
+    ax.imshow(grid, cmap=ListedColormap(["white", "black", "red", "green"]), vmin=0, vmax=3)
+
+    agent_rows = [s[0] for s in states]
+    agent_cols = [s[1] for s in states]
+    box_rows = [s[2] for s in states]
+    box_cols = [s[3] for s in states]
+
+    ax.quiver(agent_cols[:-1], agent_rows[:-1], np.diff(agent_cols), np.diff(agent_rows), angles="xy", scale_units="xy", scale=1, color="tab:blue", label="Agent")
+    ax.quiver(box_cols[:-1], box_rows[:-1], np.diff(box_cols), np.diff(box_rows), angles="xy", scale_units="xy", scale=1, color="tab:orange", label="Box")
+    ax.set_xticks([])
+    ax.set_yticks([])
     ax.legend()
     return ax

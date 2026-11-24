@@ -7,7 +7,7 @@ DELTAS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 class GridPushEnv:
 
     def __init__(self, layout, slip=0.1, seed=None):
-        self.walls, self.agent_pos, self.box_pos, self.goal_pos = parse_layout(LAYOUTS[layout])
+        self.walls, self.agent_pos, self.box_pos, self.goal_pos, self.pits = parse_layout(LAYOUTS[layout])
         self.states, self.terminal = self._enumerate_states() # each state is a tuple (agent_row, agent_col, box_row, box_col)
         self.state_index = {state: idx for idx, state in enumerate(self.states)}
         self.state = (self.agent_pos[0], self.agent_pos[1], self.box_pos[0], self.box_pos[1])  # initial state
@@ -25,12 +25,14 @@ class GridPushEnv:
         terminal = []  
         for ar, ac in np.ndindex(self.walls.shape[0], self.walls.shape[1]):
             for br, bc in np.ndindex(self.walls.shape[0], self.walls.shape[1]):
-                if not self.walls[ar, ac] and not self.walls[br, bc]:  # both agent and box must be on empty floor
+                if not self.walls[ar, ac] and not self.walls[br, bc] and not self.pits[br, bc]:  # both agent and box must be on empty floor
                     if (ar, ac) != (br, bc):
                         states.append((ar, ac, br, bc))  
 
         for state in states:
             if (state[2], state[3]) == self.goal_pos:  # box position matches goal position
+                terminal.append(True)
+            elif self.pits[state[0], state[1]]:
                 terminal.append(True)
             else:
                 terminal.append(False)
@@ -49,8 +51,9 @@ class GridPushEnv:
                 new_b = (state[2] + delta[0], state[3] + delta[1])  
                 if self._blocked(new_b):  # box hits a wall or goes off-grid
                     return state
-                else:
-                    return (new_a[0], new_a[1], new_b[0], new_b[1])  # box and agent move together
+                if self.pits[new_b]:
+                    return state
+                return (new_a[0], new_a[1], new_b[0], new_b[1])  # box and agent move together
             else:
                 return (new_a[0], new_a[1], state[2], state[3])  # only agent moves
 
@@ -76,14 +79,11 @@ class GridPushEnv:
                         p = self.action_probs(a)[possible_a]
                         P[s_i, a, possible_s_i] += p 
 
-                        if self.terminal[possible_s_i]:
-                            R[s_i, a] += 0   
-                        else:
-                            R[s_i, a] += -1 * p
+                        R[s_i, a] += p * self._reward(possible_s)
             else:
                 for a in ACTIONS:
                     P[s_i, a, s_i] = 1.0  
-                    R[s_i, a] = 0.0  
+                    R[s_i, a] = 0.0
 
         return P, R
 
@@ -101,7 +101,7 @@ class GridPushEnv:
         a = self.rng.choice(ACTIONS, p=self.action_probs(action))  
         self.state = self.move(self.state, a)
         terminated = bool(self.terminal[self.state_index[self.state]])
-        reward = 0 if terminated else -1
+        reward = self._reward(self.state)
         self.t += 1
 
         if self.t >= 100:
@@ -117,8 +117,16 @@ class GridPushEnv:
         grid = np.full(self.walls.shape, ' . ')
         grid[self.walls] = ' # '
         grid[self.goal_pos] = ' G ' 
+        grid[self.pits] = 'X'
         grid[state[0], state[1]] = ' A '  
         grid[state[2], state[3]] = ' B '   
         return "\n".join("".join(row) for row in grid)
 
-    
+    def _reward(self, next_state):
+        if self.pits[next_state[0], next_state[1]]:
+            return -100
+        if (next_state[2], next_state[3]) == self.goal_pos:
+            return 0
+        return -1
+        
+        
