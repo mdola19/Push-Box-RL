@@ -5,6 +5,7 @@ from tabular.dp import evaluate_greedy, value_iteration
 from tabular.exploration import LinearEps
 from envs.grid import GridPushEnv
 from common.plots import plot_route
+from common.stats import bootstrap_ci
 
 envs = [GridPushEnv(layout="open5", slip=0.1, seed=42), GridPushEnv(layout="rooms7", slip=0.1, seed=42)]
 layouts = ["open5", "rooms7"]
@@ -12,10 +13,11 @@ n_episodes = 6000
 gamma = 0.99
 alpha = 0.2
 seeds = [0, 1, 2, 3, 4]
+eval_every = 100
 
 def record(i, Q, ep_return):
     returns.append(ep_return)
-    if (i + 1) % 100 == 0:
+    if (i + 1) % eval_every == 0:
         values.append(evaluate_greedy(env.P, env.R, Q, gamma)[s0])
 
 fig, axs = plt.subplots(1, 2, figsize=(14, 5))
@@ -111,3 +113,46 @@ value_fig.tight_layout()
 value_fig.savefig("experiments/model_free_control/results/greedy_value.png")
 route_fig.tight_layout()
 route_fig.savefig("experiments/model_free_control/results/routes.png")
+
+# Lambda Study
+env = GridPushEnv(layout="open5", slip=0.1, seed=42)
+state, _ = env.reset()
+s0 = env.state_index[state]
+V_star, _, _ = value_iteration(env.P, env.R, gamma, 1e-8)
+eval_every = 10
+n_episodes = 5000
+lambdas = [0, 0.5, 0.9]
+
+episodes_needed = []
+for lam in lambdas:
+    lam_episodes = []
+    for seed in seeds:
+        env.reset(seed=seed)
+        rng = np.random.default_rng(seed + 1)
+        returns = []
+        values = []
+        sarsa_lambda(env, n_episodes, alpha, gamma, lam, LinearEps(1.0, 0.05, 1000), rng, callback=record)
+        needed = n_episodes
+        for k in range(len(values)):
+            if values[k] >= V_star[s0] / 0.95:
+                needed = (k + 1) * eval_every
+                break
+        lam_episodes.append(needed)
+    episodes_needed.append(lam_episodes)
+
+means = []
+lows = []
+highs = []
+for lam_episodes in episodes_needed:
+    lam_episodes = np.array(lam_episodes)
+    low, high = bootstrap_ci(lam_episodes)
+    means.append(lam_episodes.mean())
+    lows.append(lam_episodes.mean() - low)
+    highs.append(high - lam_episodes.mean())
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.bar([f"λ = {lam}" for lam in lambdas], means, yerr=[lows, highs], capsize=8, color=["tab:blue", "tab:orange", "tab:green"])
+ax.set_ylabel("Episodes to reach 95% of V*")
+ax.set_title("SARSA(λ) on open5 (mean and 95% CI over 5 seeds)")
+fig.tight_layout()
+fig.savefig("experiments/model_free_control/results/lambda_episodes.png")
