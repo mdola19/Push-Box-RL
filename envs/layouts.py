@@ -22,11 +22,12 @@ LAYOUTS["rooms7"][0, 0] = 'A'
 LAYOUTS["rooms7"][2, 1] = 'B'
 LAYOUTS["rooms7"][5, 6] = 'G'
 
-LAYOUTS["cliff"] = np.full((4,10), '.')
-LAYOUTS['cliff'][-2, 0] = 'A'
-LAYOUTS['cliff'][-2, 1] = 'B'
-LAYOUTS['cliff'][-1, 2:-3] = 'X'
-LAYOUTS['cliff'][-2, -2] = 'G'
+LAYOUTS["cliff"] = np.full((5,10), '.')
+LAYOUTS['cliff'][2, 0] = 'A'
+LAYOUTS['cliff'][2, 1] = 'B'
+LAYOUTS['cliff'][2, 8] = 'G'
+LAYOUTS['cliff'][2, 3:7] = '#'
+LAYOUTS['cliff'][4, 3:7] = 'X'
 
 def parse_layout(layout):
     agent_pos = tuple(np.argwhere(layout == 'A')[0].tolist())

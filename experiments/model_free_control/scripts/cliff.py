@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tabular.control import sarsa, sarsa_lambda, nstep_sarsa, monte_carlo, q_learning
 from tabular.dp import evaluate_greedy, value_iteration
-from tabular.exploration import LinearEps
+from tabular.exploration import LinearEps, argmax_random
 from envs.grid import GridPushEnv
 from common.plots import plot_route
 from common.stats import bootstrap_ci
@@ -33,7 +33,7 @@ for seed in seeds:
     rng = np.random.default_rng(seed + 1)
     returns = []
     values = []
-    Q_sarsa = sarsa(env, n_episodes, alpha, gamma, LinearEps(1.0, 0.1, 10000), rng, callback=record)
+    Q_sarsa = sarsa(env, n_episodes, alpha, gamma, LinearEps(1.0, 0, 20000), rng, callback=record)
     sarsa_returns.append(returns)
     sarsa_values.append(values)
 
@@ -41,14 +41,14 @@ for seed in seeds:
     rng = np.random.default_rng(seed + 1)
     returns = []
     values = []
-    Q_q = q_learning(env, n_episodes, alpha, gamma, LinearEps(1.0, 0.1, 10000), rng, callback=record)
+    Q_q = q_learning(env, n_episodes, alpha, gamma, LinearEps(1.0, 0, 20000), rng, callback=record)
     q_learning_returns.append(returns)
     q_learning_values.append(values)
 
 fig, axs = plt.subplots(1, 2, figsize=(14, 5))
 for name, method_returns in [("SARSA", sarsa_returns), ("Q-learning", q_learning_returns)]:
     axs[0].plot(range(20, n_episodes + 1, 20), np.mean(method_returns, axis=0).reshape(-1, 20).mean(axis=1), linewidth=1, label=name)
-axs[0].set_title("Training Return vs Episodes (cliff, ε = 0.1, mean over 5 seeds)")
+axs[0].set_title("Training Return vs Episodes (cliff, ε → 0, mean over 5 seeds)")
 axs[0].set_xlabel("Episodes")
 axs[0].set_ylabel("Return")
 axs[0].legend()
@@ -64,6 +64,7 @@ fig.tight_layout()
 fig.savefig("experiments/model_free_control/results/cliff_curves.png")
 
 route_env = GridPushEnv(layout="cliff", slip=0.0, seed=0)
+route_rng = np.random.default_rng(0)
 fig, axs = plt.subplots(1, 2, figsize=(14, 4))
 for name, Q, ax in [("SARSA", Q_sarsa, axs[0]), ("Q-learning", Q_q, axs[1])]:
     state, _ = route_env.reset()
@@ -71,7 +72,7 @@ for name, Q, ax in [("SARSA", Q_sarsa, axs[0]), ("Q-learning", Q_q, axs[1])]:
     terminated = False
     truncated = False
     while not terminated and not truncated:
-        a = int(np.argmax(Q[route_env.state_index[state]]))
+        a = int(argmax_random(Q[route_env.state_index[state]], route_rng))
         state, _, terminated, truncated, _ = route_env.step(a)
         states.append(state)
     plot_route(route_env, states, ax)
