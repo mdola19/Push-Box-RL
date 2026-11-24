@@ -7,7 +7,7 @@ from envs.grid import GridPushEnv
 from common.plots import plot_route
 from common.stats import bootstrap_ci
 
-env = GridPushEnv(layout="cliff", slip=0.1, seed=42)
+env = GridPushEnv(layout="cliff", slip=0, seed=42)
 n_episodes = 30000
 gamma = 0.99
 alpha = 0.2

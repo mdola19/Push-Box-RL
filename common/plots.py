@@ -75,7 +75,9 @@ def plot_route(env, states, ax):
 
     ax.quiver(agent_cols[:-1], agent_rows[:-1], np.diff(agent_cols), np.diff(agent_rows), angles="xy", scale_units="xy", scale=1, color="tab:blue", label="Agent")
     ax.quiver(box_cols[:-1], box_rows[:-1], np.diff(box_cols), np.diff(box_rows), angles="xy", scale_units="xy", scale=1, color="tab:orange", label="Box")
+    ax.scatter(agent_cols[0], agent_rows[0], s=150, marker="o", color="tab:blue", edgecolors="black", zorder=3, label="Agent Start")
+    ax.scatter(box_cols[0], box_rows[0], s=150, marker="s", color="tab:orange", edgecolors="black", zorder=3, label="Box Start")
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.legend()
+    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1), fontsize=8, borderaxespad=0)
     return ax
