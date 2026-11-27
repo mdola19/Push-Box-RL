@@ -29,6 +29,15 @@ LAYOUTS['cliff'][2, 8] = 'G'
 LAYOUTS['cliff'][2, 3:7] = '#'
 LAYOUTS['cliff'][4, 3:7] = 'X'
 
+LAYOUTS["zigzag7"] = np.full((7, 7), '.')
+LAYOUTS["zigzag7"][:, 2] = '#'
+LAYOUTS["zigzag7"][1, 2] = '.'
+LAYOUTS["zigzag7"][:, 5] = '#'
+LAYOUTS["zigzag7"][5, 5] = '.'
+LAYOUTS["zigzag7"][0, 0] = 'A'
+LAYOUTS["zigzag7"][4, 1] = 'B'
+LAYOUTS["zigzag7"][5, 6] = 'G'
+
 def parse_layout(layout):
     agent_pos = tuple(np.argwhere(layout == 'A')[0].tolist())
     box_pos = tuple(np.argwhere(layout == 'B')[0].tolist())

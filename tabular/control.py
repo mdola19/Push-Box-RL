@@ -119,15 +119,21 @@ def q_update(Q, s, a, r, next_s, terminated, alpha, gamma):
     Q[s,a] += alpha*(r + gamma*max(q_row) * (not terminated) - Q[s,a])
     return Q
 
-def q_learning(env, n_episodes, alpha, gamma, eps_schedule, rng, callback=None):
+def q_learning(env, n_episodes, alpha, gamma, eps_schedule, rng, callback=None, sampler=None, starts=None, alpha_decay=None):
     Q = np.zeros((env.n_states, env.n_actions))
+    
 
     for i in range(n_episodes):
-        state, _ = env.reset()
+        if sampler is not None and starts is not None:
+            start_idx = sampler.sample(rng)
+            state, _ = env.reset(start=starts[start_idx])
+        else:
+            state, _ = env.reset()
         terminated = False
         truncated = False
         ep_return = 0
         epsilon = eps_schedule.value(i)
+        step_size = alpha
 
         while not terminated and not truncated:
             s = env.state_index[state]
@@ -135,7 +141,13 @@ def q_learning(env, n_episodes, alpha, gamma, eps_schedule, rng, callback=None):
             state, reward, terminated, truncated, _ = env.step(a)
             ep_return += reward
             next_s = env.state_index[state]
-            Q = q_update(Q, s, a, reward, next_s, terminated, alpha, gamma)
+            if alpha_decay is not None:
+                step_size = alpha/(1 + i/alpha_decay)
+            Q = q_update(Q, s, a, reward, next_s, terminated, step_size, gamma)
+
+        if sampler is not None and starts is not None:
+            success = (state[2], state[3]) == env.goal_pos
+            sampler.update(start_idx, success)
 
         if callback:
             callback(i, Q, ep_return)

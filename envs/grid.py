@@ -6,8 +6,16 @@ DELTAS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
 class GridPushEnv:
 
-    def __init__(self, layout, slip=0.1, seed=None):
+    def __init__(self, layout, slip=0.1, seed=None, reward="dense"):
         self.walls, self.agent_pos, self.box_pos, self.goal_pos, self.pits = parse_layout(LAYOUTS[layout])
+
+        # Reward Choice
+        self.step_r = -1
+        self.terminal_r = 0
+        if reward == "sparse":
+            self.step_r = 0
+            self.terminal_r = 1
+
         self.states, self.terminal = self._enumerate_states() # each state is a tuple (agent_row, agent_col, box_row, box_col)
         self.state_index = {state: idx for idx, state in enumerate(self.states)}
         self.state = (self.agent_pos[0], self.agent_pos[1], self.box_pos[0], self.box_pos[1])  # initial state
@@ -87,14 +95,18 @@ class GridPushEnv:
 
         return P, R
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, start=None):
         self.t = 0
         info = {"seed": seed}
         
         if seed is not None:
             self.rng = np.random.default_rng(seed)
-        
-        self.state = (self.agent_pos[0], self.agent_pos[1], self.box_pos[0], self.box_pos[1])
+
+        if start is not None:
+            self.state = start
+        else:
+            self.state = (self.agent_pos[0], self.agent_pos[1], self.box_pos[0], self.box_pos[1])
+            
         return (self.state, info)
 
     def step(self, action):
@@ -126,7 +138,7 @@ class GridPushEnv:
         if self.pits[next_state[0], next_state[1]]:
             return -100
         if (next_state[2], next_state[3]) == self.goal_pos:
-            return 0
-        return -1
+            return self.terminal_r
+        return self.step_r
         
         
