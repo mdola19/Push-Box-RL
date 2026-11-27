@@ -256,7 +256,7 @@ I then ran the **Q learning** algorithm for 50000 episodes across 5 seeds with b
       - The SGS sampler shows a focus on states closer to the goal to begin with (episodes 0-2000). You can't slip much when moving through the hole so it may have a high success rate, likely why it never gets much attention. The middle stage of learning focuses on the states before going through the hole followed by the last stage which heavily focuses on the state farthest from the goal which was likely the hardest. This curriculum-like behaviour is exactly what was expected.
 
 <div align="center">  
-<img width="1300" height="800" alt="image" src="https://github.com/user-attachments/assets/0157c4a8-182a-4af1-aa2a-822ddbde52b4" />
+<img width="650" height="400" alt="image" src="https://github.com/user-attachments/assets/0157c4a8-182a-4af1-aa2a-822ddbde52b4" />
 </div>
 
 All in all, SGS clearly shows improvement compared to uniform sampling (and obviously over fixed sampling). As I increase the complexity of the problem, I plan on keeping it as a feature and see how its performance changes, further matching the context of the paper.
