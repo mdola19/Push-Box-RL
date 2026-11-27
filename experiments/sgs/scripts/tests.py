@@ -83,28 +83,18 @@ for seed in seeds:
     sgs_values.append(values)
     sgs_picks.append(sampler.picks)
 
-# Start Learning and Convergence Study
-print("\nseed | start learning (uniform, sgs) | reach 95% of V* (uniform, sgs)")
-uniform_start = []
-sgs_start = []
+# Convergence Study
+print("\nseed | reach 95% of V* (uniform, sgs)")
 uniform_converged = []
 sgs_converged = []
 for k in range(len(seeds)):
-    u_start = first_step_above(uniform_steps[k], uniform_values[k], 0.01)
-    g_start = first_step_above(sgs_steps[k], sgs_values[k], 0.01)
     u_conv = first_step_above(uniform_steps[k], uniform_values[k], 0.95 * V_star[s0])
     g_conv = first_step_above(sgs_steps[k], sgs_values[k], 0.95 * V_star[s0])
-    print(f"{seeds[k]} | {u_start}, {g_start} | {u_conv}, {g_conv}")
-
-    if u_start is not None and g_start is not None:
-        uniform_start.append(u_start)
-        sgs_start.append(g_start)
+    print(f"{seeds[k]} | {u_conv}, {g_conv}")
     if u_conv is not None and g_conv is not None:
         uniform_converged.append(u_conv)
         sgs_converged.append(g_conv)
 
-print(f"\nStart learning, averaged over {len(uniform_start)} seeds where both started:")
-print(f"  uniform = {np.mean(uniform_start)}, sgs = {np.mean(sgs_start)}, difference = {(np.mean(sgs_start) - np.mean(uniform_start)) / np.mean(uniform_start):+.1%}")
 if len(uniform_converged) > 0:
     print(f"Reach 95% of V*, averaged over {len(uniform_converged)} seeds where both reached it:")
     print(f"uniform = {np.mean(uniform_converged)}, sgs = {np.mean(sgs_converged)}, difference = {(np.mean(sgs_converged) - np.mean(uniform_converged)) / np.mean(uniform_converged):+.1%}")
